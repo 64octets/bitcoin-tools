@@ -18,7 +18,7 @@ You can download these data from: http://api.bitcoincharts.com/v1/csv/
 **Example:**
 
     mtgox_raw = read_bitcoin_csv('data/mtgoxUSD.csv')
-    mtgox_ohlc = get_bitcoin_ohlc(mtgox_raw)
+    mtgox_ohlc = get_bitcoin_ohlc(mtgox_raw, '5min')
     mtgox_ohlc['2013-01-01':].head()
 
 **Output:**
