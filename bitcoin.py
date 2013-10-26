@@ -2,12 +2,11 @@
 # Author: Peter Cerno
 
 """
-A simple script for loading and analyzing bitcoin historical time-series.
+Script for loading and analyzing bitcoin historical time-series.
 """
 
 import numpy as np
 import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.dates import num2date
 from matplotlib.dates import date2num
@@ -63,8 +62,6 @@ def plot_candlestick(frame, ylabel='BTC/USD', candle_width=1.0, freq='1M'):
     @param candle_width: width of the candles in days.
     @param freq: frequency of the plotted x labels.
     """
-    # Source: 
-    # http://stackoverflow.com/questions/13128647
     candlesticks = zip(
         date2num(frame.index),
         frame['open'],
@@ -73,64 +70,52 @@ def plot_candlestick(frame, ylabel='BTC/USD', candle_width=1.0, freq='1M'):
         frame['low'],
         frame['amount'])
     # Figure
-    fig = plt.figure()
-    fig.subplots_adjust(bottom=0.15)
-    ax = fig.add_subplot(1,1,1)
-    ax.grid(True)
-    ax.set_ylabel(ylabel, size=20)
+    ax0 = plt.subplot2grid((3,1), (0,0), rowspan=2)
+    ax1 = plt.subplot2grid((3,1), (2,0), rowspan=1, sharex=ax0)
+    plt.subplots_adjust(bottom=0.15)
+    plt.setp(ax0.get_xticklabels(), visible=False)
+    ax0.grid(True)
+    ax0.set_ylabel(ylabel, size=20)
     # Candlestick
-    candlestick(ax, candlesticks, 
+    candlestick(ax0, candlesticks, 
         width=0.5*candle_width, 
         colorup='g', colordown='r')
-    # Shift y-limits of the candlestick plot so that there 
-    # is a space at the bottom for the volume bar chart
-    pad = 0.25
-    yl = ax.get_ylim()
-    ax.set_ylim(yl[0]-(yl[1]-yl[0])*pad, yl[1])
-    # Create the second axis for the volume bar-plot
-    ax2 = ax.twinx()
-    # Set the position of ax2 so that it is short (y2=0.32) 
-    # but otherwise the same size as ax
-    ax2.set_position(matplotlib.transforms.Bbox([[0.125, 0.15], [0.9, 0.32]]))
     # Get data from candlesticks for a bar plot
-    dates = [x[0] for x in candlesticks]
-    dates = np.asarray(dates)
-    volume = [x[5] for x in candlesticks]
-    volume = np.asarray(volume)
+    dates = np.asarray([x[0] for x in candlesticks])
+    volume = np.asarray([x[5] for x in candlesticks])
     # Make bar plots and color differently depending on up/down for the day
-    pos = frame['open']-frame['close']<0
-    neg = frame['open']-frame['close']>0
-    ax2.bar(dates[pos], volume[pos], color='g', width=candle_width, align='center')
-    ax2.bar(dates[neg], volume[neg], color='r', width=candle_width, align='center')
+    pos = frame['open'] - frame['close'] < 0
+    neg = frame['open'] - frame['close'] > 0
+    ax1.grid(True)
+    ax1.bar(dates[pos], volume[pos], color='g', width=candle_width, align='center')
+    ax1.bar(dates[neg], volume[neg], color='r', width=candle_width, align='center')
     # Scale the x-axis tight
-    ax2.set_xlim(min(dates),max(dates))
-    # y-ticks for the bar were too dense, keep only every third one
-    yticks = ax2.get_yticks()
-    ax2.set_yticks(yticks[::3])
-    ax2.yaxis.set_label_position("right")
-    ax2.set_ylabel('VOLUME', size=20)
+    ax1.set_xlim(min(dates),max(dates))
+    ax1.set_ylabel('VOLUME', size=20)
     # Format the x-ticks with a human-readable date. 
-    ax.set_xticks([date2num(date) for date in pd.date_range(
+    xt = [date2num(date) for date in pd.date_range(
             start=min(frame.index), 
             end=max(frame.index),
-            freq=freq)])
-    xt = ax.get_xticks()
-    new_xticks = [num2date(d).strftime('%Y-%m-%d\n%H:%M:%S') for d in xt]
-    ax.set_xticklabels(new_xticks,rotation=45, horizontalalignment='right')
+            freq=freq)]
+    ax1.set_xticks(xt)
+    xt_labels = [num2date(d).strftime('%Y-%m-%d\n%H:%M:%S') for d in xt]
+    ax1.set_xticklabels(xt_labels,rotation=45, horizontalalignment='right')
     # Plot
     plt.ion()
     plt.show()
+    return (ax0, ax1)
 
 
-# Read raw bitcoin price history from a csv file
-bitstamp_raw = read_bitcoin_csv('data/bitstampUSD.csv')
-# Get bitcoin OHLC data frame with 1h frequency
-bitstamp = get_bitcoin_ohlc(bitstamp_raw, '1h')
-# Select a specific time interval
-from_date = '2013-06-01'
-to_date = '2013-06-07'
-bitstamp = bitstamp[
-    (bitstamp.index >= from_date) &
-    (bitstamp.index < to_date)]
-# Plot candlestick graph
-plot_candlestick(bitstamp, candle_width=1./24., freq='1D')
+if __name__ == '__main__':
+    # Read raw bitcoin price history from a csv file
+    bitstamp_raw = read_bitcoin_csv('data/bitstampUSD.csv')
+    # Get bitcoin OHLC data frame with 1h frequency
+    bitstamp = get_bitcoin_ohlc(bitstamp_raw, '1h')
+    # Select a specific time interval
+    from_date = '2013-06-01'
+    to_date = '2013-06-07'
+    bitstamp = bitstamp[
+        (bitstamp.index >= from_date) &
+        (bitstamp.index < to_date)]
+    # Plot candlestick graph
+    plot_candlestick(bitstamp, candle_width=1./24., freq='1D')
