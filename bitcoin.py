@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.dates import num2date
 from matplotlib.dates import date2num
-from matplotlib.finance import candlestick
+from matplotlib.finance import candlestick_ochl
 
 
 def read_bitcoin_csv(bitcoin_csv_file_name):
@@ -62,13 +62,13 @@ def plot_candlestick(frame, ylabel='BTC/USD', candle_width=1.0, freq='1M'):
     @param candle_width: width of the candles in days.
     @param freq: frequency of the plotted x labels.
     """
-    candlesticks = zip(
-        date2num(frame.index),
+    candlesticks = list(zip(
+        date2num(frame.index._mpl_repr()),
         frame['open'],
         frame['close'],
         frame['high'],
         frame['low'],
-        frame['amount'])
+        frame['amount']))
     # Figure
     ax0 = plt.subplot2grid((3,1), (0,0), rowspan=2)
     ax1 = plt.subplot2grid((3,1), (2,0), rowspan=1, sharex=ax0)
@@ -77,15 +77,15 @@ def plot_candlestick(frame, ylabel='BTC/USD', candle_width=1.0, freq='1M'):
     ax0.grid(True)
     ax0.set_ylabel(ylabel, size=20)
     # Candlestick
-    candlestick(ax0, candlesticks, 
+    candlestick_ochl(ax0, candlesticks, 
         width=0.5*candle_width, 
         colorup='g', colordown='r')
     # Get data from candlesticks for a bar plot
     dates = np.asarray([x[0] for x in candlesticks])
     volume = np.asarray([x[5] for x in candlesticks])
     # Make bar plots and color differently depending on up/down for the day
-    pos = frame['open'] - frame['close'] < 0
-    neg = frame['open'] - frame['close'] > 0
+    pos = np.nonzero(frame['close'] - frame['open'] > 0)
+    neg = np.nonzero(frame['open'] - frame['close'] > 0)
     ax1.grid(True)
     ax1.bar(dates[pos], volume[pos], color='g', width=candle_width, align='center')
     ax1.bar(dates[neg], volume[neg], color='r', width=candle_width, align='center')
@@ -101,7 +101,6 @@ def plot_candlestick(frame, ylabel='BTC/USD', candle_width=1.0, freq='1M'):
     xt_labels = [num2date(d).strftime('%Y-%m-%d\n%H:%M:%S') for d in xt]
     ax1.set_xticklabels(xt_labels,rotation=45, horizontalalignment='right')
     # Plot
-    plt.ion()
     plt.show()
     return (ax0, ax1)
 
