@@ -62,13 +62,13 @@ def plot_candlestick(frame, ylabel='BTC/USD', candle_width=1.0, freq='1M'):
     @param candle_width: width of the candles in days.
     @param freq: frequency of the plotted x labels.
     """
-    candlesticks = zip(
+    candlesticks = list(zip(
         date2num(frame.index._mpl_repr()),
         frame['open'],
         frame['close'],
         frame['high'],
         frame['low'],
-        frame['amount'])
+        frame['amount']))
     # Figure
     ax0 = plt.subplot2grid((3,1), (0,0), rowspan=2)
     ax1 = plt.subplot2grid((3,1), (2,0), rowspan=1, sharex=ax0)
